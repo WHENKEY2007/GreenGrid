@@ -1,0 +1,29 @@
+# Build output
+target/
+dist/
+build/
+coverage/
+
+# Local database and logs
+data/
+logs/
+*.log
+
+# Dependencies and environment
+node_modules/
+.env
+.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.claude/
+.classpath
+.project
+.settings/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db

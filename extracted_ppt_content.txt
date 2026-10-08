@@ -1,0 +1,336 @@
+Total slides found: 15
+============================================================
+SLIDE: ppt/slides/slide1.xml
+============================================================
+Department of Artificial Intelligence and Machine Learning
+Java 17 · Spring Boot 3.5 · JPA/Hibernate · MySQL · JWT · WebSocket · SOAP
+API & MS – Project Review
+Course Code: 241AI024
+SquadUp — Player Matching & Social Platform
+Enterprise Spring Boot Platform for Multiplayer Gaming Lobbies
+[Name 1]   -   [Roll No.]
+[Name 2]   -   [Roll No.]
+[Name 3]   -   [Roll No.]
+[Name 4]   -   [Roll No.]
+============================================================
+SLIDE: ppt/slides/slide2.xml
+============================================================
+Project Scope & Objectives
+Overview of SquadUp
+Enterprise web application that fixes the social gaps in online multiplayer gaming
+Players create and join Squad Lobbies ("Looking for Group") built around game title, spoken language, skill level and playstyle
+Manage profiles and build friend lists
+Receive AI-weighted squad recommendations
+Chat in real time across squad lobbies and direct messages
+Objectives & Academic Scope
+Dual API: RESTful JSON (/api/v1, /api/v2) and SOAP XML web services
+Stateless Bearer-token security with ownership guards
+Dynamic search using JPA Criteria API and Matrix Variables
+Concurrency-safe squad joins with pessimistic locking
+Real-time STOMP WebSocket chat and live notifications
+AOP for logging, performance timing and audit trails
+Built on Spring Boot 3.5 to meet the comprehensive requirements of the API & Micro Services curriculum (241AI024).
+============================================================
+SLIDE: ppt/slides/slide3.xml
+============================================================
+Problem Statement & Motivation
+Standard matchmaking relies only on skill (MMR) and ping, ignoring whether players are actually compatible.
+The Problem
+Communication Breakdown:
+ players are queued with teammates who do not speak the same language
+Playstyle Clashes:
+ casual players are paired with hyper-competitive players, creating toxic environments
+Social Disconnect:
+ teams disband after a single match, so lasting gaming groups are hard to form
+The SquadUp Solution
+Compatibility-First Matching:
+ filter and create squads by game, spoken language and playstyle
+Weighted Recommendation Engine:
+ compatibility score (%) for open squads based on user preferences
+Integrated Social & Chat:
+ real-time STOMP chat with automatic profanity moderation, friend management and live notifications
+============================================================
+SLIDE: ppt/slides/slide4.xml
+============================================================
+System Architecture & Data Flow
+Browser Client
+HTML5 · CSS3 · JavaScript
+→
+Security Filter
+Token Authentication
+→
+REST / SOAP / WS
+API entry points
+→
+Service Layer
+Transactions + AOP
+→
+JPA / JDBC
+Hibernate · JdbcTemplate
+→
+Database
+H2 / MySQL 8
+REST Request Flow
+Client sends Authorization: Bearer <token>
+TokenAuthenticationFilter validates the token
+@RestController (Auth, User, Squad, Friend)
+@Service layer: transactional logic and AOP
+Spring Data JPA (Hibernate) or JdbcTemplate (PlatformStatsDao) reads/writes the database
+Other Entry Points
+WebSocket / STOMP:
+ /ws connection to the WebSocket Controller for chat and live notifications
+SOAP:
+ client XML request to MessageDispatcherServlet, WSDL at /soap/players.wsdl
+Three entry points (REST, SOAP, WebSocket) share one service layer and one database.
+============================================================
+SLIDE: ppt/slides/slide5.xml
+============================================================
+Technology Stack Matrix
+Runtime & Language
+Java 17+ (tested on JDK 25), JVM
+Core Framework
+Spring Boot 3.5.x, Spring Framework 6.x
+IoC & Container
+Spring IoC, AppConfig, Singleton / Prototype / Request scopes
+Persistence & ORM
+Spring Data JPA, Hibernate, Criteria API, JdbcTemplate, H2, MySQL 8
+Web & APIs
+Spring Web MVC, Spring WS (SOAP), JAXB, WSDL4J
+Real-Time
+Spring WebSocket, STOMP, SockJS fallback
+Security & Validation
+Spring Security 6, Bearer JWT, Jakarta Bean Validation
+AOP
+Spring AOP: @Aspect, @Before, @Around, @AfterReturning, @AfterThrowing
+Logging
+SLF4J + Logback (squadup.log, audit.log)
+Testing
+JUnit 5, MockMvc, @DataJpaTest, RestTemplate client
+Build & Tooling
+Maven 3.9 Wrapper, PowerShell start.ps1
+Frontend
+HTML5, CSS3, JavaScript (ES6+) served statically
+H2 gives zero-setup development; MySQL 8 is available for production through a Spring profile.
+============================================================
+SLIDE: ppt/slides/slide6.xml
+============================================================
+Module 1: Auth & Security
+Client
+Login request
+→
+Login Endpoint
+AuthService
+→
+Token Generation
+TokenService
+→
+Protected Endpoint
+Authorization: Bearer
+Stateless Tokens:
+ bearer token generation, authentication and invalidation via AuthService and TokenService
+Password Hashing:
+ credentials protected with PasswordEncoder
+AccessGuard:
+ players can only update or delete their own profile, squads and friendships
+JsonSecurityErrorHandler:
+ clean JSON 401 / 403 responses instead of HTML error pages
+[ Screenshot here ]
+Login screen
+[ Screenshot here ]
+Token response (login API)
+[ Screenshot here ]
+401 / 403 JSON error
+============================================================
+SLIDE: ppt/slides/slide7.xml
+============================================================
+Module 2: Profile & Paged Search
+User Profile Management
+Profiles store player metadata: primary games, playstyle and spoken languages
+Pagination and sorting with Spring Data Pageable and Sort
+GET /api/v1/users?page=0&size=10&sort=username,asc
+Search players by username substring
+Cascade Account Deletion:
+ UserServiceImpl.deleteAccount() removes friendships, squad memberships and chat history inside a single @Transactional boundary
+[ Screenshot here ]
+Player profile page
+[ Screenshot here ]
+Paged player search
+============================================================
+SLIDE: ppt/slides/slide8.xml
+============================================================
+Module 3: Squad Lobbies & Filtering
+Squad Lobby Features
+Squad Creation:
+ players create lobbies with configurable member limits
+JPA Criteria API:
+ SquadRepositoryCustomImpl builds dynamic queries (game, language, open status)
+Matrix Variables:
+ /squads/browse/filter;game=Valorant;language=English
+Pessimistic Locking:
+ @Lock(PESSIMISTIC_WRITE) in SquadService.join() prevents overfilled lobbies on concurrent joins
+[ Screenshot here ]
+Filtered squad lobby
+[ Screenshot here ]
+Matrix-variable request / response
+============================================================
+SLIDE: ppt/slides/slide9.xml
+============================================================
+Module 4: Matching Engine
+50%
+Game Match
+30%
+Language Match
+20%
+Playstyle Match
+Weighted Scoring Algorithm
+Score = (w1 · Game) + (w2 · Language) + (w3 · Playstyle)
+Prototype Scope:
+ SquadMatcher is @Scope("prototype"), fetched via ObjectProvider for isolated per-request calculation
+Compares open squads with the player's game, language and playstyle
+Returns top recommended squads with a match % and human-readable reasons
+[ Screenshot here ]
+Recommended squads with match percentage
+============================================================
+SLIDE: ppt/slides/slide10.xml
+============================================================
+Module 5: Social Network
+Send Request
+POST /friends/request
+→
+Pending
+Queue for recipient
+→
+Accepted
+or Rejected
+→
+Friends List
+Live notification sent
+→
+Unfriend
+Relationship removed
+Friendship System
+Friendship JPA entity manages bidirectional relationships
+Status states: PENDING, ACCEPTED, REJECTED
+Send, accept, reject and unfriend operations
+JPQL @Modifying queries for status updates
+STOMP notification dispatched live when a request is accepted
+[ Screenshot here ]
+Friends & pending requests
+[ Screenshot here ]
+Real-time notification
+============================================================
+SLIDE: ppt/slides/slide11.xml
+============================================================
+Module 6: Real-Time Chat
+Client
+STOMP message
+→
+/app/chat.send
+Publish destination
+→
+ChatModerator
+Profanity filter
+→
+/topic/room.{id}
+Broadcast
+→
+Subscribers
+Squad / DM users
+Room Routing
+Squad lobby chat: squad_<squadId>
+Direct messages: dm_<idA>_<idB>
+Moderation & Live Indicators
+ChatModerator (setter injection in AppConfig) filters bad words before broadcast
+Live typing notifications in chat rooms
+[ Screenshot here ]
+Squad lobby chat
+[ Screenshot here ]
+Censored message
+[ Screenshot here ]
+Typing indicator
+============================================================
+SLIDE: ppt/slides/slide12.xml
+============================================================
+Module 7: SOAP & Analytics
+Contract-First SOAP Service
+PlayerSoapEndpoint handles XML requests mapped via players.xsd
+WSDL generated at /soap/players.wsdl
+Operations: getPlayerRequest, searchPlayersRequest
+Custom @SoapFault error handling
+Analytics with JdbcTemplate
+PlatformStatsDao runs raw, high-speed analytical SQL
+Top games, total squads and active user metrics
+GET /api/v1/stats?topGames=5
+[ Screenshot here ]
+WSDL in browser
+[ Screenshot here ]
+SOAP request & response
+[ Screenshot here ]
+Platform stats JSON
+============================================================
+SLIDE: ppt/slides/slide13.xml
+============================================================
+Aspect-Oriented Programming
+Service Call
+Client request
+→
+@Before
+LoggingAspect
+→
+@Around
+PerformanceAspect
+→
+Service Method
+Business logic
+→
+@AfterReturning
+@AfterThrowing
+Three Dedicated Aspects
+LoggingAspect:
+ @Before, @AfterReturning, @AfterThrowing log method inputs, outputs and exceptions
+PerformanceAspect:
+ custom @TrackExecutionTime annotation with @Around advice logs latency in ms
+AuditAspect:
+ logs logins, password updates and account deletions to logs/audit.log
+[ Screenshot here ]
+Audit and performance logs
+============================================================
+SLIDE: ppt/slides/slide14.xml
+============================================================
+Testing & Data Seeding
+53
+Automated tests
+20
+Seeded players
+18
+Squad lobbies
+2
+Databases: H2 / MySQL
+Automated Test Suite
+JUnit 5 unit tests and @DataJpaTest repository tests
+MockMvc controller tests and SOAP endpoint tests
+.\mvnw.cmd test
+Seeding & Database
+DataSeeder fills 20 players, 18 squads (Valorant, CS:GO, LoL, Apex), friendships and chat history
+Zero-setup embedded H2 by default; switch with .\start.ps1 mysql
+[ Screenshot here ]
+Maven test result (53 tests)
+[ Screenshot here ]
+Seeded data in H2 console
+============================================================
+SLIDE: ppt/slides/slide15.xml
+============================================================
+Conclusion & Q&A
+Summary of Deliverables
+Compatibility-first squad matching platform on Spring Boot 3.5
+REST and SOAP APIs with stateless token security
+Weighted recommendation engine and real-time STOMP chat
+AOP logging, auditing and 53 automated tests
+Links & Demo
+GitHub:
+ github.com/Sashankdeva/API_Proj
+Live Demo:
+ http://localhost:5500
+SOAP WSDL:
+ http://localhost:5500/soap/players.wsdl
+Thank You! Questions?
