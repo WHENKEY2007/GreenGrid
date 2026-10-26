@@ -53,11 +53,21 @@ async function ensureDatabase() {
   }
 
   try {
-    const proc = spawn(pgExe, ['-D', pgData], {
-      detached: true,
-      stdio: 'ignore',
-    });
-    proc.unref();
+    const binDir = path.dirname(pgExe);
+    const pgCtl = path.join(binDir, 'pg_ctl.exe');
+
+    if (fs.existsSync(pgCtl)) {
+      spawn(pgCtl, ['start', '-D', pgData, '-s'], {
+        detached: true,
+        stdio: 'ignore',
+      }).unref();
+    } else {
+      const proc = spawn(pgExe, ['-D', pgData], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      proc.unref();
+    }
 
     // Wait until port 5432 becomes ready
     const start = Date.now();
